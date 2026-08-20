@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1565c0">
+<meta name="description" content="Local network IP Finder for authorized networks">
+<link rel="manifest" href="manifest.json">
+<title>IP Finder</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#172b4d}
+header{background:#1565c0;color:white;padding:20px 16px 18px;border-radius:0 0 18px 18px}
+h1{margin:0;font-size:28px}.sub{opacity:.9;margin-top:5px}
+main{padding:14px;max-width:700px;margin:auto}
+.card{background:#fff;border-radius:16px;padding:15px;margin-bottom:14px;box-shadow:0 2px 10px #0001}
+button{border:0;border-radius:12px;padding:13px 16px;background:#1565c0;color:white;font-size:16px;font-weight:bold}
+button.secondary{background:#e8eef7;color:#172b4d}button:disabled{opacity:.5}
+.network{line-height:1.6}.status{margin-top:10px;font-size:14px}
+.result{border:1px solid #dde5ef;border-radius:13px;padding:13px;margin-top:10px}
+.ip{font-size:19px;font-weight:bold}.muted{color:#607d9a;font-size:14px;margin-top:4px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.actions button{font-size:14px;padding:9px 11px}
+.note{font-size:13px;color:#607d9a;line-height:1.5}
+#results:empty:after{content:"Scan karne ke baad devices yahan dikhenge.";display:block;color:#789;padding:12px}
+</style>
+</head>
+<body>
+<header><h1>IP Finder</h1><div class="sub">Local Wi‑Fi Network Scanner</div></header>
+<main>
+<div class="card network">
+<b>Network</b>
+<div id="net">Network information dekhne ke liye permission/connection required.</div>
+<div class="actions">
+<button id="scan">SCAN NETWORK</button>
+<button class="secondary" id="clear">CLEAR</button>
+</div>
+<div class="status" id="status">Ready</div>
+</div>
+
+<div class="card">
+<b>Found Devices</b>
+<div id="results"></div>
+</div>
+
+<div class="card note">
+<b>Important:</b> Browser security ki wajah se normal GitHub Pages website arbitrary LAN IP/ports ko directly scan nahi kar sakti. Yeh app safe browser-compatible discovery methods (jahan available hon) use karega. Full 1–254 port scan ke liye native Android app ki zarurat hoti hai. Sirf apne/authorized network par use karein.
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let devices=[];
+function add(ip,port,kind="Possible network device"){
+ if(devices.some(x=>x.ip===ip&&x.port===port))return;
+ devices.push({ip,port,kind}); render();
+}
+function render(){
+ $("results").innerHTML=devices.map((d,i)=>`
+ <div class="result">
+   <div class="ip">${d.ip}</div>
+   <div class="muted">${d.kind}${d.port?` • Port ${d.port}`:""}</div>
+   <div class="actions">
+    <button onclick="openIp('${d.ip}')">OPEN</button>
+    <button class="secondary" onclick="copyIp('${d.ip}')">COPY IP</button>
+   </div>
+ </div>`).join("");
+}
+function openIp(ip){location.href="http://"+ip}
+async function copyIp(ip){try{await navigator.clipboard.writeText(ip);$("status").textContent="IP copied: "+ip}catch(e){$("status").textContent="IP: "+ip}}
+$("clear").onclick=()=>{devices=[];render();$("status").textContent="Cleared"};
+$("scan").onclick=async()=>{
+ devices=[];render();
+ $("status").textContent="Browser limitation: direct LAN port scanning available nahi hai.";
+ $("net").textContent="Phone ke current Wi‑Fi ki details browser se restricted ho sakti hain.";
+};
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
